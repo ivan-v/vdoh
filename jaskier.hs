@@ -1,11 +1,12 @@
 module Jaskier where
 import Euterpea
 import Data.Ratio
+import System.Random
 
 -- Modes are recorded in relative pitches to the tonic/root note, 0.
 -- TODO: make non-8 note scales work properly
 
-data Moda  = Moda { mode_name :: String, notes :: [Integer]}
+data Moda  = Moda { mode_name :: String, notes :: [Int]}
 type Modes = [Moda]
 
 i = Moda {mode_name="Ionian", notes=[0, 2, 4, 5, 7, 9, 11]}
@@ -24,7 +25,7 @@ modes = [
 
 -- Keys are how tones (selected by the modes) are modified
 
-data Key  = Key { key_name :: String, pitch_modifiers :: [Integer]}
+data Key  = Key { key_name :: String, pitch_modifiers :: [Int]}
 type Keys = [Key]
 
 keys = [
@@ -47,7 +48,17 @@ keys = [
 
 
 -- TODO: improve clunky usage: apply_key (keys!!0) (modes!!0)
-apply_key :: Key -> Moda -> [Integer]
-apply_key (Key name modifiers) (Moda scale notes) =
- zipWith (+) (modifiers) notes  
+apply_key :: Key -> Moda -> [Int]
+apply_key (Key name modifiers) (Moda scale notes) = 
+    zipWith (+) (modifiers) notes
 
+choose :: [a] -> StdGen -> (a, StdGen)
+choose [] g = error "Nothing to choose from!"
+choose xs g =
+    let (i, g') = next g
+    in (xs !! (i `mod` length xs), g')
+
+brush_stroke :: (Dur, Scale) -> StdGen -> [AbsPitch]
+brush_stroke (dur, scale) g0 = map (*steps) (strokes)
+    where (steps, g1) = choose [1,2,3] g0
+          (strokes, g2) = choose [ [0,1,2], [0,0,0], [0,-1,-2] ] g1
